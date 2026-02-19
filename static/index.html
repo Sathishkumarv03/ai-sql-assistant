@@ -1,0 +1,71 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>AI SQL Assistant</title>
+    <style>
+        body {
+            font-family: Arial;
+            background: #f4f6f8;
+            display: flex;
+            justify-content: center;
+            padding-top: 50px;
+        }
+
+        .chat-box {
+            width: 500px;
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 0 10px rgba(0,0,0,0.1);
+        }
+
+        #response {
+            margin-top: 15px;
+            padding: 10px;
+            background: #f0f2f5;
+            border-radius: 6px;
+            min-height: 50px;
+        }
+
+        input {
+            width: 75%;
+            padding: 8px;
+        }
+
+        button {
+            padding: 8px 12px;
+            cursor: pointer;
+        }
+    </style>
+</head>
+<body>
+
+<div class="chat-box">
+    <h2>AI SQL Assistant</h2>
+    <input type="text" id="question" placeholder="Ask something...">
+    <button onclick="askAI()">Send</button>
+
+    <div id="response"></div>
+</div>
+
+<script>
+async function askAI() {
+    const question = document.getElementById("question").value;
+    const responseBox = document.getElementById("response");
+
+    responseBox.innerHTML = "Thinking...";
+
+    const res = await fetch("/ask-ai", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ question: question })
+    });
+
+    const data = await res.json();
+
+    responseBox.innerHTML = data.answer || data.error;
+}
+</script>
+
+</body>
+</html>
