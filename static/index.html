@@ -4,66 +4,152 @@
     <title>AI SQL Assistant</title>
     <style>
         body {
-            font-family: Arial;
+            font-family: Arial, sans-serif;
             background: #f4f6f8;
             display: flex;
             justify-content: center;
-            padding-top: 50px;
+            align-items: center;
+            height: 100vh;
+            margin: 0;
         }
 
-        .chat-box {
-            width: 500px;
+        .chat-container {
+            width: 600px;
+            height: 600px;
             background: white;
-            padding: 20px;
-            border-radius: 8px;
-            box-shadow: 0 0 10px rgba(0,0,0,0.1);
+            display: flex;
+            flex-direction: column;
+            border-radius: 10px;
+            box-shadow: 0 0 20px rgba(0,0,0,0.1);
+            overflow: hidden;
         }
 
-        #response {
-            margin-top: 15px;
+        .chat-header {
+            padding: 15px;
+            background: #2c3e50;
+            color: white;
+            font-weight: bold;
+        }
+
+        .chat-messages {
+            flex: 1;
+            padding: 15px;
+            overflow-y: auto;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+
+        .message {
+            padding: 10px 14px;
+            border-radius: 15px;
+            max-width: 75%;
+            word-wrap: break-word;
+        }
+
+        .user {
+            background: #3498db;
+            color: white;
+            align-self: flex-end;
+        }
+
+        .ai {
+            background: #ecf0f1;
+            color: black;
+            align-self: flex-start;
+        }
+
+        .chat-input {
+            display: flex;
             padding: 10px;
-            background: #f0f2f5;
-            border-radius: 6px;
-            min-height: 50px;
+            border-top: 1px solid #ddd;
         }
 
-        input {
-            width: 75%;
-            padding: 8px;
+        .chat-input input {
+            flex: 1;
+            padding: 10px;
+            border-radius: 20px;
+            border: 1px solid #ccc;
+            outline: none;
         }
 
-        button {
-            padding: 8px 12px;
+        .chat-input button {
+            margin-left: 10px;
+            padding: 10px 15px;
+            border-radius: 20px;
+            border: none;
+            background: #2c3e50;
+            color: white;
             cursor: pointer;
+        }
+
+        .chat-input button:hover {
+            background: #1a252f;
+        }
+
+        .loading {
+            font-style: italic;
+            opacity: 0.6;
         }
     </style>
 </head>
 <body>
 
-<div class="chat-box">
-    <h2>AI SQL Assistant</h2>
-    <input type="text" id="question" placeholder="Ask something...">
-    <button onclick="askAI()">Send</button>
+<div class="chat-container">
+    <div class="chat-header">
+        AI SQL Assistant
+    </div>
 
-    <div id="response"></div>
+    <div id="messages" class="chat-messages"></div>
+
+    <div class="chat-input">
+        <input type="text" id="question" placeholder="Ask about transactions...">
+        <button onclick="askAI()">Send</button>
+    </div>
 </div>
 
 <script>
+const messagesDiv = document.getElementById("messages");
+
+function addMessage(text, type) {
+    const msg = document.createElement("div");
+    msg.classList.add("message", type);
+    msg.innerText = text;
+    messagesDiv.appendChild(msg);
+    messagesDiv.scrollTop = messagesDiv.scrollHeight;
+}
+
 async function askAI() {
-    const question = document.getElementById("question").value;
-    const responseBox = document.getElementById("response");
+    const input = document.getElementById("question");
+    const question = input.value.trim();
 
-    responseBox.innerHTML = "Thinking...";
+    if (!question) return;
 
-    const res = await fetch("/ask-ai", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ question: question })
-    });
+    addMessage(question, "user");
+    input.value = "";
 
-    const data = await res.json();
+    const loadingMsg = document.createElement("div");
+    loadingMsg.classList.add("message", "ai", "loading");
+    loadingMsg.innerText = "Thinking...";
+    messagesDiv.appendChild(loadingMsg);
+    messagesDiv.scrollTop = messagesDiv.scrollHeight;
 
-    responseBox.innerHTML = data.answer || data.error;
+    try {
+        const res = await fetch("/ask-ai", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ question })
+        });
+
+        const data = await res.json();
+        loadingMsg.remove();
+
+        addMessage(data.answer || data.error, "ai");
+
+    } catch (err) {
+        loadingMsg.remove();
+        addMessage("Error connecting to server.", "ai");
+    }
 }
 </script>
 
